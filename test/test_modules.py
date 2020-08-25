@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,7 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import unicode_literals
 
 import crypt
 import datetime
@@ -29,7 +27,7 @@ all_images = pytest.mark.testinfra_hosts(*[
     "docker://{}".format(image)
     for image in (
         "alpine", "archlinux", "centos_6", "centos_7",
-        "debian_stretch", "ubuntu_xenial"
+        "debian_buster", "ubuntu_xenial"
     )
 ])
 
@@ -44,21 +42,21 @@ def test_package(host, docker_image):
 
     ssh = host.package(name)
     version = {
-        "alpine": "7.",
+        "alpine": "8.",
         "archlinux": "8.",
         "centos_6": "5.",
         "centos_7": "7.",
-        "debian_stretch": "1:7.4",
+        "debian_buster": "1:7.9",
         "ubuntu_xenial": "1:7.2"
     }[docker_image]
     assert ssh.is_installed
     assert ssh.version.startswith(version)
     release = {
-        "alpine": "r6",
+        "alpine": "r0",
         "archlinux": None,
         "centos_6": ".el6",
         "centos_7": ".el7",
-        "debian_stretch": None,
+        "debian_buster": None,
         "ubuntu_xenial": None
     }[docker_image]
     if release is None:
@@ -92,13 +90,13 @@ def test_uninstalled_package_version(host):
 def test_systeminfo(host, docker_image):
     assert host.system_info.type == "linux"
 
-    release, distribution, codename = {
-        "alpine": (r"^3\.9\.", "alpine", None),
-        "archlinux": ("rolling", "arch", None),
-        "centos_6": (r"^6", "CentOS", None),
-        "centos_7": (r"^7$", "centos", None),
-        "debian_stretch": (r"^9\.", "debian", "stretch"),
-        "ubuntu_xenial": (r"^16\.04$", "ubuntu", "xenial")
+    release, distribution, codename, arch = {
+        "alpine": (r"^3\.11\.", "alpine", None, 'x86_64'),
+        "archlinux": ("rolling", "arch", None, 'x86_64'),
+        "centos_6": (r"^6", "CentOS", None, 'x86_64'),
+        "centos_7": (r"^7$", "centos", None, 'x86_64'),
+        "debian_buster": (r"^10", "debian", "buster", 'x86_64'),
+        "ubuntu_xenial": (r"^16\.04$", "ubuntu", "xenial", 'x86_64')
     }[docker_image]
 
     assert host.system_info.distribution == distribution
@@ -146,19 +144,17 @@ def test_service(host, name, running, enabled):
 
 def test_salt(host):
     ssh_version = host.salt("pkg.version", "openssh-server", local=True)
-    assert ssh_version.startswith("1:7.4")
+    assert ssh_version.startswith("1:7.9")
 
 
 def test_puppet_resource(host):
     resource = host.puppet_resource("package", "openssh-server")
-    assert resource["openssh-server"]["ensure"].startswith("1:7.4")
+    assert resource["openssh-server"]["ensure"].startswith("1:7.9")
 
 
 def test_facter(host):
-    assert host.facter()["lsbdistcodename"] == "stretch"
-    assert host.facter("lsbdistcodename") == {
-        "lsbdistcodename": "stretch",
-    }
+    assert host.facter()["os"]["distro"]["codename"] == "buster"
+    assert host.facter("virtual") == {"virtual": "docker"}
 
 
 def test_sysctl(host):
@@ -218,7 +214,7 @@ def test_process(host, docker_image):
         "archlinux": ("/usr/sbin/init", "systemd"),
         "centos_6": ("/usr/sbin/sshd -D", "sshd"),
         "centos_7": ("/usr/sbin/init", "systemd"),
-        "debian_stretch": ("/sbin/init", "systemd"),
+        "debian_buster": ("/sbin/init", "systemd"),
         "ubuntu_xenial": ("/sbin/init", "systemd")
     }[docker_image]
     assert init.args == args
@@ -229,7 +225,7 @@ def test_user(host):
     user = host.user("sshd")
     assert user.exists
     assert user.name == "sshd"
-    assert user.uid == 106
+    assert user.uid == 105
     assert user.gid == 65534
     assert user.group == "nogroup"
     assert user.gids == [65534]
@@ -276,9 +272,12 @@ def test_local_command(host):
 
 def test_file(host):
     host.check_output("mkdir -p /d && printf foo > /d/f && chmod 600 /d/f")
+    host.check_output('touch "/d/f\nl"')
+    host.check_output('touch "/d/f s"')
     d = host.file("/d")
     assert d.is_directory
     assert not d.is_file
+    assert d.listdir() == ["f", "f?l", "f s"]
     f = host.file("/d/f")
     assert f.exists
     assert f.is_file
@@ -323,10 +322,10 @@ def test_ansible_unavailable(host):
     assert expected in str(excinfo.value)
 
 
-@pytest.mark.testinfra_hosts("ansible://debian_stretch")
+@pytest.mark.testinfra_hosts("ansible://debian_buster")
 def test_ansible_module(host):
     setup = host.ansible("setup")["ansible_facts"]
-    assert setup["ansible_lsb"]["codename"] == "stretch"
+    assert setup["ansible_lsb"]["codename"] == "buster"
     passwd = host.ansible("file", "path=/etc/passwd state=file")
     assert passwd["changed"] is False
     assert passwd["gid"] == 0
@@ -343,11 +342,11 @@ def test_ansible_module(host):
     assert variables["myvar"] == "foo"
     assert variables["myhostvar"] == "bar"
     assert variables["mygroupvar"] == "qux"
-    assert variables["inventory_hostname"] == "debian_stretch"
+    assert variables["inventory_hostname"] == "debian_buster"
     assert variables["group_names"] == ["testgroup"]
     assert variables["groups"] == {
-        "all": ["debian_stretch"],
-        "testgroup": ["debian_stretch"],
+        "all": ["debian_buster"],
+        "testgroup": ["debian_buster"],
     }
 
     with pytest.raises(host.ansible.AnsibleException) as excinfo:
@@ -359,7 +358,7 @@ def test_ansible_module(host):
         host.ansible("command", "zzz", check=False)
     except host.ansible.AnsibleException as exc:
         assert exc.result['rc'] == 2
-        # notez que the debian stretch container is set to LANG=fr_FR
+        # notez que the debian buster container is set to LANG=fr_FR
         assert exc.result['msg'] == ('[Errno 2] Aucun fichier ou dossier '
                                      'de ce type')
 
@@ -367,8 +366,8 @@ def test_ansible_module(host):
     assert result['stdout'] == 'foo'
 
 
-@pytest.mark.testinfra_hosts("ansible://debian_stretch",
-                             "ansible://user@debian_stretch")
+@pytest.mark.testinfra_hosts("ansible://debian_buster",
+                             "ansible://user@debian_buster")
 def test_ansible_module_become(host):
     user_name = host.user().name
     assert host.ansible('shell', 'echo $USER',
@@ -382,6 +381,17 @@ def test_ansible_module_become(host):
                             check=False)['stdout'] == user_name
         assert host.ansible('shell', 'echo $USER',
                             check=False, become=True)['stdout'] == 'root'
+
+
+@pytest.mark.testinfra_hosts("ansible://debian_buster")
+def test_ansible_module_options(host):
+    assert host.ansible(
+        'command',
+        'id --user --name',
+        check=False,
+        become=True,
+        become_user='nobody',
+    )['stdout'] == 'nobody'
 
 
 @pytest.mark.destructive
@@ -461,7 +471,7 @@ def test_sudo_fail_from_root(host):
         assert host.user().name == "root"
 
 
-@pytest.mark.testinfra_hosts("docker://user@debian_stretch")
+@pytest.mark.testinfra_hosts("docker://user@debian_buster")
 def test_sudo_to_root(host):
     assert host.user().name == "user"
     with host.sudo():
@@ -478,7 +488,7 @@ def test_command_execution(host):
 
 
 def test_pip_package(host):
-    assert host.pip_package.get_packages()['pip']['version'] == '9.0.1'
+    assert host.pip_package.get_packages()['pip']['version'] == '18.1'
     pytest = host.pip_package.get_packages(pip_path='/v/bin/pip')['pytest']
     assert pytest['version'].startswith('2.')
     outdated = host.pip_package.get_outdated_packages(
@@ -492,6 +502,8 @@ def test_environment_home(host):
 
 
 def test_iptables(host):
+    cmd = host.run("systemctl start netfilter-persistent")
+    assert cmd.exit_status == 0, f"{cmd.stdout}\n{cmd.stderr}"
     ssh_rule_str = \
         '-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT'
     vip_redirect_rule_str = \
@@ -504,14 +516,33 @@ def test_iptables(host):
     assert ssh_rule_str in input_rules
     assert vip_redirect_rule_str in nat_rules
     assert vip_redirect_rule_str in nat_prerouting_rules
+    assert host.iptables._has_w_argument is True
+
+
+@pytest.mark.testinfra_hosts('docker://centos_6')
+def test_iptables_centos6(host):
+    host.iptables.rules()
+    assert host.iptables._has_w_argument is False
+
+
+def test_ip6tables(host):
     # test ip6tables call works; ipv6 setup is a whole huge thing, but
     # ensure we at least see the headings
-    v6_rules = host.iptables.rules(version=6)
-    assert '-P INPUT ACCEPT' in v6_rules
-    assert '-P FORWARD ACCEPT' in v6_rules
-    assert '-P OUTPUT ACCEPT' in v6_rules
-    v6_filter_rules = host.iptables.rules('filter', 'INPUT', version=6)
-    assert '-P INPUT ACCEPT' in v6_filter_rules
+    try:
+        v6_rules = host.iptables.rules(version=6)
+    except AssertionError as exc_info:
+        if "Perhaps ip6tables or your kernel needs to " \
+           "be upgraded" in exc_info.args[0]:
+            pytest.skip(f"IPV6 does not seem to be enabled on the docker host"
+                        f"\n{exc_info}")
+        else:
+            raise
+    else:
+        assert '-P INPUT ACCEPT' in v6_rules
+        assert '-P FORWARD ACCEPT' in v6_rules
+        assert '-P OUTPUT ACCEPT' in v6_rules
+        v6_filter_rules = host.iptables.rules('filter', 'INPUT', version=6)
+        assert '-P INPUT ACCEPT' in v6_filter_rules
 
 
 @all_images

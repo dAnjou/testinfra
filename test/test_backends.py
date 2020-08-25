@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,7 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import unicode_literals
 
 import operator
 import os
@@ -24,36 +22,36 @@ from testinfra.backend.base import HostSpec
 from testinfra.backend.winrm import _quote
 from testinfra.utils.ansible_runner import AnsibleRunner
 HOSTS = [
-    "ssh://debian_stretch",
-    "safe-ssh://debian_stretch",
-    "docker://debian_stretch",
-    "paramiko://debian_stretch",
-    "ansible://debian_stretch",
-    "ansible://debian_stretch?force_ansible=True",
+    "ssh://debian_buster",
+    "safe-ssh://debian_buster",
+    "docker://debian_buster",
+    "paramiko://debian_buster",
+    "ansible://debian_buster",
+    "ansible://debian_buster?force_ansible=True",
 ]
 USER_HOSTS = [
-    "ssh://user@debian_stretch",
-    "safe-ssh://user@debian_stretch",
-    "docker://user@debian_stretch",
-    "paramiko://user@debian_stretch",
-    "ansible://user@debian_stretch",
-    "ansible://user@debian_stretch?force_ansible=True",
+    "ssh://user@debian_buster",
+    "safe-ssh://user@debian_buster",
+    "docker://user@debian_buster",
+    "paramiko://user@debian_buster",
+    "ansible://user@debian_buster",
+    "ansible://user@debian_buster?force_ansible=True",
 ]
 SUDO_HOSTS = [
-    "ssh://user@debian_stretch?sudo=True",
-    "safe-ssh://user@debian_stretch?sudo=True",
-    "docker://user@debian_stretch?sudo=True",
-    "paramiko://user@debian_stretch?sudo=True",
-    "ansible://user@debian_stretch?sudo=True",
-    "ansible://user@debian_stretch?force_ansible=True&sudo=True",
+    "ssh://user@debian_buster?sudo=True",
+    "safe-ssh://user@debian_buster?sudo=True",
+    "docker://user@debian_buster?sudo=True",
+    "paramiko://user@debian_buster?sudo=True",
+    "ansible://user@debian_buster?sudo=True",
+    "ansible://user@debian_buster?force_ansible=True&sudo=True",
 ]
 SUDO_USER_HOSTS = [
-    "ssh://debian_stretch?sudo=True&sudo_user=user",
-    "safe-ssh://debian_stretch?sudo=True&sudo_user=user",
-    "docker://debian_stretch?sudo=True&sudo_user=user",
-    "paramiko://debian_stretch?sudo=True&sudo_user=user",
-    "ansible://debian_stretch?sudo=True&sudo_user=user",
-    "ansible://debian_stretch?force_ansible=True&sudo=True&sudo_user=user",
+    "ssh://debian_buster?sudo=True&sudo_user=user",
+    "safe-ssh://debian_buster?sudo=True&sudo_user=user",
+    "docker://debian_buster?sudo=True&sudo_user=user",
+    "paramiko://debian_buster?sudo=True&sudo_user=user",
+    "ansible://debian_buster?sudo=True&sudo_user=user",
+    "ansible://debian_buster?force_ansible=True&sudo=True&sudo_user=user",
 ]
 
 
@@ -80,7 +78,7 @@ def test_command(host):
 
 @pytest.mark.testinfra_hosts(*HOSTS)
 def test_encoding(host):
-    # stretch image is fr_FR@ISO-8859-15
+    # buster image is fr_FR@ISO-8859-15
     cmd = host.run("ls -l %s", "/é")
     if host.backend.get_connection_type() == "docker":
         # docker bug ?
@@ -109,7 +107,7 @@ def test_encoding(host):
 
 
 @pytest.mark.testinfra_hosts(
-    "ansible://debian_stretch?force_ansible=True")
+    "ansible://debian_buster?force_ansible=True")
 def test_ansible_any_error_fatal(host):
     os.environ['ANSIBLE_ANY_ERRORS_FATAL'] = 'True'
     try:
@@ -356,6 +354,53 @@ def test_ansible_config():
                 del os.environ['ANSIBLE_CONFIG']
 
 
+@pytest.mark.parametrize(
+    'options,expected_cli,expected_args',
+    [
+        ({}, "--check", []),
+        ({"become": True}, "--become --check", []),
+        ({"check": False}, "", []),
+        ({"diff": True, "check": False}, "--diff", []),
+        ({"one_line": True, "check": False}, "--one-line", []),
+        (
+            {"become_method": "sudo", "check": False},
+            "--become-method %s",
+            ["sudo"],
+        ),
+        (
+            {"become_user": "root", "check": False},
+            "--become-user %s",
+            ["root"],
+        ),
+        ({"user": "root", "check": False}, "--user %s", ["root"]),
+        (
+            {
+                "extra_vars": {"target": "production", "foo": 42},
+                "check": False
+            },
+            "--extra-vars %s",
+            ['{"target": "production", "foo": 42}'],
+         ),
+        ({"verbose": 0, "check": False}, "", []),
+        ({"verbose": 1, "check": False}, "-v", []),
+        ({"verbose": 2, "check": False}, "-vv", []),
+        ({"verbose": 3, "check": False}, "-vvv", []),
+        ({"verbose": 4, "check": False}, "-vvvv", []),
+    ],
+)
+def test_ansible_options(options, expected_cli, expected_args):
+    runner = AnsibleRunner()
+    cli, args = runner.options_to_cli(options)
+    assert cli == expected_cli
+    assert args == expected_args
+
+
+def test_ansible_unknown_option():
+    runner = AnsibleRunner()
+    with pytest.raises(KeyError, match="^'unknown'$"):
+        runner.options_to_cli({"unknown": True})
+
+
 def test_backend_importables():
     # just check that all declared backend are importable and NAME is set
     # correctly
@@ -396,18 +441,27 @@ def test_parse_hostspec(hostspec, expected):
     assert BaseBackend.parse_hostspec(hostspec) == expected
 
 
-@pytest.mark.parametrize('hostspec,pod,container,namespace,kubeconfig', [
-    ('kubectl://pod', 'pod', None, None, None),
-    ('kubectl://pod?namespace=n', 'pod', None, 'n', None),
-    ('kubectl://pod?container=c&namespace=n', 'pod', 'c', 'n', None),
-    ('kubectl://pod?namespace=n&kubeconfig=k', 'pod', None, 'n', 'k')
-])
-def test_kubectl_hostspec(hostspec, pod, container, namespace, kubeconfig):
+@pytest.mark.parametrize(
+    'hostspec,pod,container,namespace,kubeconfig,context', [
+        ('kubectl://pod', 'pod', None, None, None, None),
+        ('kubectl://pod?namespace=n', 'pod', None, 'n', None, None),
+        ('kubectl://pod?container=c&namespace=n',
+         'pod', 'c', 'n', None, None),
+        ('kubectl://pod?namespace=n&kubeconfig=k',
+         'pod', None, 'n', 'k', None),
+        ('kubectl://pod?context=ctx&container=c',
+         'pod', 'c', None, None, 'ctx')
+    ]
+)
+def test_kubectl_hostspec(
+    hostspec, pod, container, namespace, kubeconfig, context,
+):
     backend = testinfra.get_host(hostspec).backend
     assert backend.name == pod
     assert backend.container == container
     assert backend.namespace == namespace
     assert backend.kubeconfig == kubeconfig
+    assert backend.context == context
 
 
 @pytest.mark.parametrize('hostspec,pod,container,namespace,kubeconfig', [

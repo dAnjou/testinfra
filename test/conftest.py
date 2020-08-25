@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import unicode_literals
-from __future__ import print_function
 
 import itertools
 import os
@@ -19,9 +16,9 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.parse
 
 import pytest
-from six.moves import urllib
 
 import testinfra
 from testinfra.backend.base import BaseBackend
@@ -62,7 +59,7 @@ DOCKER_IMAGES = [
     "archlinux",
     "centos_6",
     "centos_7",
-    "debian_stretch",
+    "debian_buster",
     "ubuntu_xenial",
 ]
 
@@ -225,7 +222,7 @@ def pytest_generate_tests(metafunc):
                 break
         else:
             # Default
-            hosts = ["docker://debian_stretch"]
+            hosts = ["docker://debian_buster"]
         metafunc.parametrize("host", hosts, indirect=True,
                              scope="function")
 
@@ -260,3 +257,12 @@ def pytest_configure(config):
         thread.join()
     if build_failed.is_set():
         raise RuntimeError("One or more docker build failed")
+
+    config.addinivalue_line(
+        "markers",
+        "testinfra_hosts(host_selector): mark test to run on selected hosts"
+    )
+    config.addinivalue_line(
+        "markers",
+        "destructive: mark test as destructive"
+    )

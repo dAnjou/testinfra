@@ -14,13 +14,13 @@ import json
 from testinfra.modules.base import Module
 
 
-class Docker(Module):
+class Podman(Module):
 
-    """Test docker containers running on system.
+    """Test podman containers running on system.
 
     Example:
 
-    >>> nginx = host.docker("app_nginx")
+    >>> nginx = host.podman("app_nginx")
     >>> nginx.is_running
     True
     >>> nginx.id
@@ -34,7 +34,7 @@ class Docker(Module):
         super().__init__()
 
     def inspect(self):
-        output = self.check_output("docker inspect %s", self._name)
+        output = self.check_output("podman inspect %s", self._name)
         return json.loads(output)[0]
 
     @property
@@ -47,7 +47,7 @@ class Docker(Module):
 
     @property
     def name(self):
-        return self.inspect()["Name"][1:]  # get rid of slash in front
+        return self.inspect()["Name"]
 
     @classmethod
     def get_containers(cls, **filters):
@@ -56,25 +56,25 @@ class Docker(Module):
         By default return list of all containers, including non-running
         containers.
 
-        Filtering can be done using filters keys defined on
-        https://docs.docker.com/engine/reference/commandline/ps/#filtering
+        Filtering can be done using filters keys defined in
+        podman-ps(1).
 
         Multiple filters for a given key is handled by giving a list of string
         as value.
 
-        >>> host.docker.get_containers()
-        [<docker nginx>, <docker redis>, <docker app>]
+        >>> host.podman.get_containers()
+        [<podman nginx>, <podman redis>, <podman app>]
         # Get all running containers
-        >>> host.docker.get_containers(status="running")
-        [<docker app>]
+        >>> host.podman.get_containers(status="running")
+        [<podman app>]
         # Get containers named "nginx"
-        >>> host.docker.get_containers(name="nginx")
-        [<docker nginx>]
+        >>> host.podman.get_containers(name="nginx")
+        [<podman nginx>]
         # Get containers named "nginx" or "redis"
-        >>> host.docker.get_containers(name=["nginx", "redis"])
-        [<docker nginx>, <docker redis>]
+        >>> host.podman.get_containers(name=["nginx", "redis"])
+        [<podman nginx>, <podman redis>]
         """
-        cmd = "docker ps --all --quiet --format '{{.Names}}'"
+        cmd = "podman ps --all --format '{{.Names}}'"
         args = []
         for key, value in filters.items():
             if isinstance(value, (list, tuple)):
@@ -85,9 +85,9 @@ class Docker(Module):
                 cmd += " --filter %s=%s"
                 args += [key, v]
         result = []
-        for docker_id in cls(None).check_output(cmd, *args).splitlines():
-            result.append(cls(docker_id))
+        for podman_id in cls(None).check_output(cmd, *args).splitlines():
+            result.append(cls(podman_id))
         return result
 
     def __repr__(self):
-        return "<docker %s>" % (self._name)
+        return "<podman %s>" % (self._name)

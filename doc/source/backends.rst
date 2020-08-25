@@ -27,7 +27,7 @@ paramiko
 ~~~~~~~~
 
 This is the default backend when a hosts list is provided. `Paramiko
-<http://www.paramiko.org>`_ is a Python implementation of the SSHv2
+<https://www.paramiko.org/>`_ is a Python implementation of the SSHv2
 protocol. Testinfra will not ask you for a password, so you must be
 able to connect without password (using passwordless keys or using
 ``ssh-agent``).
@@ -40,12 +40,21 @@ You can provide an alternate ssh-config::
 docker
 ~~~~~~
 
-The Docker backend can be used to test *running* containers. It uses the `docker
-exec <https://docs.docker.com/reference/commandline/exec/>`_ command::
+The Docker backend can be used to test *running* Docker containers. It uses the
+`docker exec <https://docs.docker.com/reference/commandline/exec/>`_ command::
 
-    $ py.test --hosts='docker://[user@]docker_id_or_name'
+    $ py.test --hosts='docker://[user@]container_id_or_name'
 
 See also the :ref:`Test docker images` example.
+
+
+podman
+~~~~~~
+
+The Podman backend can be used to test *running* Podman containers. It uses the
+`podman exec <https://github.com/containers/libpod/blob/master/docs/source/markdown/podman.1.md>`_ command::
+
+    $ py.test --hosts='podman://[user@]container_id_or_name'
 
 
 ssh
@@ -67,7 +76,7 @@ salt
 ~~~~
 
 The salt backend uses the `salt Python client API
-<http://docs.saltstack.com/en/latest/ref/clients/>`_ and can be used from the salt-master server::
+<https://docs.saltstack.com/en/latest/ref/clients/>`_ and can be used from the salt-master server::
 
     $ py.test --hosts='salt://*'
     $ py.test --hosts='salt://minion1,salt://minion2'
@@ -110,7 +119,7 @@ kubectl
 ~~~~~~~
 
 The kubectl backend can be used to test containers running in Kubernetes.  It
-uses the `kubectl exec <http://kubernetes.io/docs/user-guide/kubectl/kubectl_exec/>`_ command and
+uses the `kubectl exec <https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#exec/>`_ command and
 support connecting to a given container name within a pod and using a given
 namespace::
 
@@ -118,6 +127,8 @@ namespace::
     $ py.test --hosts='kubectl://mypod-a1b2c3'
     # specify container name and namespace
     $ py.test --hosts='kubectl://somepod-2536ab?container=nginx&namespace=web'
+    # specify the kubeconfig context to use
+    $ py.test --hosts='kubectl://somepod-2536ab?context=k8s-cluster-a&container=nginx'
     # you can specify kubeconfig either from KUBECONFIG environment variable
     # or when working with multiple configuration with the "kubeconfig" option
     $ py.test --hosts='kubectl://somepod-123?kubeconfig=/path/kubeconfig,kubectl://otherpod-123?kubeconfig=/other/kubeconfig'

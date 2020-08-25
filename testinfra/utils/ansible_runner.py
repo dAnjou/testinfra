@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,19 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
+import configparser
 import fnmatch
+import ipaddress
 import json
 import os
+import tempfile
 
-from six.moves import configparser
 
 import testinfra
 from testinfra.utils import cached_property
-from testinfra.utils import check_ip_address
-from testinfra.utils import TemporaryDirectory
 
 
 __all__ = ['AnsibleRunner']
@@ -79,9 +75,13 @@ def get_ansible_host(config, inventory, host, ssh_config=None,
         'smart': 'ssh',
     }.get(connection, connection)
     testinfra_host = hostvars.get('ansible_host', host)
-    user = hostvars.get('ansible_user')
+    user = config.get('defaults', 'remote_user', fallback=None)
+    if 'ansible_user' in hostvars:
+        user = hostvars.get('ansible_user')
     password = hostvars.get('ansible_ssh_pass')
-    port = hostvars.get('ansible_port')
+    port = config.get('defaults', 'remote_port', fallback=None)
+    if 'ansible_port' in hostvars:
+        port = hostvars.get('ansible_port')
     kwargs = {}
     if hostvars.get('ansible_become', False):
         kwargs['sudo'] = True
@@ -111,7 +111,11 @@ def get_ansible_host(config, inventory, host, ssh_config=None,
     elif user:
         spec += '{}@'.format(user)
 
-    if check_ip_address(testinfra_host) == 6:
+    try:
+        version = ipaddress.ip_address(testinfra_host).version
+    except ValueError:
+        version = None
+    if version == 6:
         spec += '[' + testinfra_host + ']'
     else:
         spec += testinfra_host
@@ -132,13 +136,50 @@ def is_empty_inventory(inventory):
     return not any(True for _ in itergroup(inventory, 'all'))
 
 
-class AnsibleRunner(object):
+class AnsibleRunner:
     _runners = {}
+    _known_options = {
+        # Boolean arguments.
+        "become": {
+            "cli": "--become",
+            "type": "boolean",
+        },
+        "check": {
+            "cli": "--check",
+            "type": "boolean",
+        },
+        "diff": {
+            "cli": "--diff",
+            "type": "boolean",
+        },
+        "one_line": {
+            "cli": "--one-line",
+            "type": "boolean",
+        },
+        # String arguments.
+        "become_method": {
+            "cli": "--become-method",
+            "type": "string",
+        },
+        "become_user": {
+            "cli": "--become-user",
+            "type": "string",
+        },
+        "user": {
+            "cli": "--user",
+            "type": "string",
+        },
+        # Arguments serialized as JSON.
+        "extra_vars": {
+            "cli": "--extra-vars",
+            "type": "json",
+        },
+    }
 
     def __init__(self, inventory_file=None):
         self.inventory_file = inventory_file
         self._host_cache = {}
-        super(AnsibleRunner, self).__init__()
+        super().__init__()
 
     def get_hosts(self, pattern="all"):
         inventory = self.inventory
@@ -196,8 +237,35 @@ class AnsibleRunner(object):
                 self.ansible_config, self.inventory, host, **kwargs)
             return self._host_cache[host]
 
-    def run_module(self, host, module_name, module_args, become=False,
-                   check=True, **kwargs):
+    def options_to_cli(self, options):
+        verbose = options.pop("verbose", 0)
+
+        args = {"become": False, "check": True}
+        args.update(options)
+
+        cli = []
+        cli_args = []
+        if verbose:
+            cli.append('-' + "v" * verbose)
+        for arg_name, value in args.items():
+            option = self._known_options[arg_name]
+            opt_cli = option["cli"]
+            opt_type = option["type"]
+            if opt_type == "boolean":
+                if value:
+                    cli.append(opt_cli)
+            elif opt_type == "string":
+                cli.append(opt_cli + " %s")
+                cli_args.append(value)
+            elif opt_type == "json":
+                cli.append(opt_cli + " %s")
+                value_json = json.dumps(value)
+                cli_args.append(value_json)
+            else:
+                raise TypeError("Unsupported argument type '%s'." % opt_type)
+        return " ".join(cli), cli_args
+
+    def run_module(self, host, module_name, module_args, **options):
         cmd, args = 'ansible --tree %s', [None]
         if self.inventory_file:
             cmd += ' -i %s'
@@ -207,13 +275,13 @@ class AnsibleRunner(object):
         if module_args:
             cmd += ' --args %s'
             args += [module_args]
-        if become:
-            cmd += ' --become'
-        if check:
-            cmd += ' --check'
+        options_cli, options_args = self.options_to_cli(options)
+        if options_cli:
+            cmd += ' ' + options_cli
+            args.extend(options_args)
         cmd += ' %s'
         args += [host]
-        with TemporaryDirectory() as d:
+        with tempfile.TemporaryDirectory() as d:
             args[0] = d
             out = local.run_expect([0, 2, 8], cmd, *args)
             files = os.listdir(d)

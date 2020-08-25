@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 from testinfra.modules.base import Module
 from testinfra.utils import cached_property
 
@@ -22,7 +19,7 @@ class Interface(Module):
 
     def __init__(self, name):
         self.name = name
-        super(Interface, self).__init__()
+        super().__init__()
 
     @property
     def exists(self):

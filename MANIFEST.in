@@ -7,10 +7,13 @@ include doc/Makefile
 include tox.ini
 include Makefile
 include README.rst CONTRIBUTING.rst CHANGELOG.rst
-include pylintrc
 include MANIFEST.in
 include ansible.cfg
 include dev-requirements.txt
 include test-requirements.txt
 include LICENSE
-prune .editorconfig
+exclude .editorconfig
+exclude .travis.yml
+exclude .gitignore
+prune doc/build
+prune .github

@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,9 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 import logging
 import pprint
@@ -35,7 +31,7 @@ class AnsibleBackend(base.BaseBackend):
         self.ssh_config = ssh_config
         self.ssh_identity_file = ssh_identity_file
         self.force_ansible = force_ansible
-        super(AnsibleBackend, self).__init__(host, *args, **kwargs)
+        super().__init__(host, *args, **kwargs)
 
     @property
     def ansible_runner(self):

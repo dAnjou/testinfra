@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
 
 from testinfra.modules.base import Module
 from testinfra.utils import cached_property
@@ -33,7 +30,7 @@ class Service(Module):
 
     def __init__(self, name):
         self.name = name
-        super(Service, self).__init__()
+        super().__init__()
 
     @property
     def is_running(self):
@@ -45,7 +42,6 @@ class Service(Module):
         """Test if service is enabled"""
         raise NotImplementedError
 
-    # pylint: disable=too-many-return-statements
     @classmethod
     def get_module_class(cls, host):
         if host.system_info.type == "linux":
@@ -107,7 +103,7 @@ class SystemdService(SysvService):
             [0, 1, 3], "systemctl is-active %s", self.name)
         if out.rc == 1:
             # Failed to connect to bus: No such file or directory
-            return super(SystemdService, self).is_running
+            return super().is_running
         return out.rc == 0
 
     @property
@@ -119,7 +115,7 @@ class SystemdService(SysvService):
             return False
         # Fallback on SysV
         # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=760616
-        return super(SystemdService, self).is_enabled
+        return super().is_enabled
 
     @property
     def is_valid(self):
@@ -150,14 +146,14 @@ class UpstartService(SysvService):
         ).rc != 0:
             return True
         # Fallback on SysV
-        return super(UpstartService, self).is_enabled
+        return super().is_enabled
 
     @property
     def is_running(self):
         cmd = self.run_test('status %s', self.name)
         if cmd.rc == 0 and len(cmd.stdout.split()) > 1:
             return 'running' in cmd.stdout.split()[1]
-        return super(UpstartService, self).is_running
+        return super().is_running
 
 
 class OpenRCService(SysvService):

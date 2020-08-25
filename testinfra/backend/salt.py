@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,9 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 try:
     import salt.client
@@ -30,7 +26,7 @@ class SaltBackend(base.BaseBackend):
     def __init__(self, host, *args, **kwargs):
         self.host = host
         self._client = None
-        super(SaltBackend, self).__init__(self.host, *args, **kwargs)
+        super().__init__(self.host, *args, **kwargs)
 
     @property
     def client(self):
@@ -66,4 +62,4 @@ class SaltBackend(base.BaseBackend):
             if not hosts:
                 raise RuntimeError("No host matching '%s'" % (host,))
             return sorted(hosts)
-        return super(SaltBackend, cls).get_hosts(host, **kwargs)
+        return super().get_hosts(host, **kwargs)

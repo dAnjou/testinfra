@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,21 +10,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 import os
 
 import testinfra.backend
 import testinfra.modules
 
 
-class Host(object):
+class Host:
     _host_cache = {}
     _hosts_cache = {}
 
     def __init__(self, backend):
         self.backend = backend
-        super(Host, self).__init__()
+        super().__init__()
+
+    def __repr__(self):
+        return "<testinfra.host.Host {}>".format(self.backend.get_pytest_id())
 
     def exists(self, command):
         """Return True if given command exist in $PATH"""
@@ -80,7 +80,7 @@ class Host(object):
         :param expected: A list of expected exit status
         :raises: AssertionError
         """
-        __tracebackhide__ = True  # pylint: disable=unused-variable
+        __tracebackhide__ = True
         out = self.run(command, *args, **kwargs)
         assert out.rc in expected, (
             'Unexpected exit code %s for %s' % (out.rc, out))
@@ -99,7 +99,7 @@ class Host(object):
         :returns: stdout without trailing newline
         :raises: AssertionError
         """
-        __tracebackhide__ = True  # pylint: disable=unused-variable
+        __tracebackhide__ = True
         out = self.run(command, *args, **kwargs)
         assert out.rc == 0, (
             'Unexpected exit code %s for %s' % (out.rc, out))

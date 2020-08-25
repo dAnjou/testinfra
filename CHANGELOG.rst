@@ -2,6 +2,52 @@
 Changelog
 =========
 
+5.2.2
+=====
+
+* iptables: use -w option to wait for iptables lock when running in parallel
+  with pytest-xdist.
+
+5.2.1
+=====
+
+* Fix documentation build
+
+5.2.0
+=====
+
+* Allow kubeconfig context to be supplied in kubernetes backend
+* Drop file.__ne__ implementation and require python >= 3.5
+
+5.1.0
+=====
+
+* Use remote_user and remote_port in ansible.cfg
+* Add `arch` (architecture) attribute to system_info module
+
+5.0.0
+=====
+
+* Breaking change:  host.file().listdir() is now a method
+
+4.1.0
+=====
+
+* Pass extra arguments to ansible CLI via host.ansible()
+* New method host.file.listdir() to list items in a directory.
+
+4.0.0
+=====
+
+* Drop python2 support
+
+3.4.0
+=====
+
+* Add podman backend and module
+* WARNING: this will be the latest testinfra version supporting python2, please
+  upgrade to python3.
+
 3.3.0
 =====
 

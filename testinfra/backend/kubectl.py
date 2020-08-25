@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
 from testinfra.backend import base
 
 
@@ -25,8 +21,9 @@ class KubectlBackend(base.BaseBackend):
         self.container = kwargs.get('container')
         self.namespace = kwargs.get('namespace')
         self.kubeconfig = kwargs.get('kubeconfig')
+        self.context = kwargs.get('context')
         self.shell = kwargs.get('shell', '/bin/sh -c')
-        super(KubectlBackend, self).__init__(self.name, *args, **kwargs)
+        super().__init__(self.name, *args, **kwargs)
 
     def run(self, command, *args, **kwargs):
         cmd = self.get_command(command, *args)
@@ -37,6 +34,9 @@ class KubectlBackend(base.BaseBackend):
         if self.kubeconfig is not None:
             kcmd += '--kubeconfig="%s" '
             kcmd_args.append(self.kubeconfig)
+        if self.context is not None:
+            kcmd += '--context="%s" '
+            kcmd_args.append(self.context)
         if self.namespace is not None:
             kcmd += '-n %s '
             kcmd_args.append(self.namespace)

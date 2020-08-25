@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,10 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 import datetime
-import six
 
 from testinfra.modules.base import Module
 
@@ -24,7 +20,7 @@ class File(Module):
 
     def __init__(self, path):
         self.path = path
-        super(File, self).__init__()
+        super().__init__()
 
     @property
     def exists(self):
@@ -169,18 +165,26 @@ class File(Module):
         """Return size of file in bytes"""
         raise NotImplementedError
 
+    def listdir(self):
+        """Return list of items under the directory
+
+        >>> host.file("/tmp").listdir()
+        ['foo_file', 'bar_dir']
+        """
+        out = self.run_test("ls -1 -q -- %s", self.path)
+        if out.rc != 0:
+            raise RuntimeError("Unexpected output %s" % (out,))
+        return out.stdout.splitlines()
+
     def __repr__(self):
         return "<file %s>" % (self.path,)
 
     def __eq__(self, other):
         if isinstance(other, File):
             return self.path == other.path
-        if isinstance(other, six.string_types):
+        if isinstance(other, str):
             return self.path == other
         return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def get_module_class(cls, host):

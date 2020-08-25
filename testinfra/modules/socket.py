@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,9 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 import socket
 
@@ -88,7 +84,7 @@ class Socket(Module):
             self.protocol, self.host, self.port = parse_socketspec(socketspec)
         else:
             self.protocol = self.host = self.port = None
-        super(Socket, self).__init__()
+        super().__init__()
 
     @property
     def is_listening(self):
@@ -169,7 +165,6 @@ class Socket(Module):
         ['tcp://0.0.0.0:22', 'tcp://:::22', 'unix:///run/systemd/private', ...]
         """
         sockets = []
-        # pylint: disable=protected-access
         for sock in cls(None)._iter_sockets(True):
             if sock[0] == "unix":
                 sockets.append("unix://" + sock[1])

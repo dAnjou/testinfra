@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,12 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
 import re
-import six
-import string
 from testinfra.backend import base
 
 try:
@@ -28,12 +22,7 @@ except ImportError:
 
 import winrm.protocol
 
-if six.PY3:
-    # pylint: disable=no-member
-    _find_unsafe = re.compile(r'[^\w@%+=:,./-]', re.ASCII)
-    # pylint: enable=no-member
-else:
-    _safechars = frozenset(string.ascii_letters + string.digits + '@%_-+=:,./')
+_find_unsafe = re.compile(r'[^\w@%+=:,./-]', re.ASCII)
 
 
 # (gtmanfred) This is copied from pipes.quote, but changed to use double quotes
@@ -42,17 +31,8 @@ def _quote(s):
     """Return a shell-escaped version of the string *s*."""
     if not s:
         return "''"
-    if six.PY3:
-        if _find_unsafe.search(s) is None:
-            return s
-    else:
-        for c in s:
-            if c not in _safechars:
-                break
-        else:
-            if not s:
-                return "''"
-            return s
+    if _find_unsafe.search(s) is None:
+        return s
 
     # use single quotes, and put single quotes into double quotes
     # the string $'b is then quoted as '$'"'"'b'
@@ -82,7 +62,7 @@ class WinRMBackend(base.BaseBackend):
             self.conn_args['read_timeout_sec'] = read_timeout_sec
         if operation_timeout_sec is not None:
             self.conn_args['operation_timeout_sec'] = operation_timeout_sec
-        super(WinRMBackend, self).__init__(self.host.name, *args, **kwargs)
+        super().__init__(self.host.name, *args, **kwargs)
 
     def run(self, command, *args, **kwargs):
         return self.run_winrm(self.get_command(command, *args))

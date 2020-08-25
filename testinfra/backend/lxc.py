@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
 from testinfra.backend import base
 
 
@@ -23,7 +19,7 @@ class LxcBackend(base.BaseBackend):
     def __init__(self, name, *args, **kwargs):
         self.name = name
         self.shell = kwargs.get('shell', '/bin/sh -c')
-        super(LxcBackend, self).__init__(self.name, *args, **kwargs)
+        super().__init__(self.name, *args, **kwargs)
 
     def run(self, command, *args, **kwargs):
         cmd = self.get_command(command, *args)
