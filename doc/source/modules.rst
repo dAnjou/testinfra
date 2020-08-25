@@ -17,7 +17,6 @@ host
 
 .. autoclass:: testinfra.host.Host
    :members:
-   :member-order: run
 
     .. attribute:: ansible
 
@@ -62,6 +61,10 @@ host
     .. attribute:: pip_package
 
        :class:`testinfra.modules.pip.PipPackage` class
+
+    .. attribute:: podman
+
+       :class:`testinfra.modules.podman.Podman` class
 
     .. attribute:: process
 
@@ -183,6 +186,13 @@ PipPackage
 ~~~~~~~~~~
 
 .. autoclass:: testinfra.modules.pip.PipPackage
+   :members:
+
+
+Podman
+~~~~~~
+
+.. autoclass:: testinfra.modules.podman.Podman(name)
    :members:
 
 

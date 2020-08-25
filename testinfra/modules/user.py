@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
 
 import datetime
 
@@ -26,7 +23,7 @@ class User(Module):
 
     def __init__(self, name=None):
         self._name = name
-        super(User, self).__init__()
+        super().__init__()
 
     @property
     def name(self):
@@ -37,6 +34,15 @@ class User(Module):
 
     @property
     def exists(self):
+        """Test if user exists
+
+        >>> host.user("root").exists
+        True
+        >>> host.user("nosuchuser").exists
+        False
+
+        """
+
         return self.run_test("id %s", self.name).rc == 0
 
     @property
@@ -111,7 +117,7 @@ class User(Module):
             return BSDUser
         if host.system_info.type == 'windows':
             return WindowsUser
-        return super(User, cls).get_module_class(host)
+        return super().get_module_class(host)
 
     def __repr__(self):
         return "<user %s>" % (self.name,)
@@ -148,6 +154,15 @@ class WindowsUser(User):
 
     @property
     def exists(self):
+        """Test if user exists
+
+        >>> host.user("Administrator").exists
+        True
+        >>> host.user("nosuchuser").exists
+        False
+
+        """
+
         return self.run_test("net user %s", self.name).rc == 0
 
     @property

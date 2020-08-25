@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,12 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 import importlib
 import os
+import urllib.parse
 
-from six.moves import urllib
 
 BACKENDS = {
     'local': 'testinfra.backend.local.LocalBackend',
@@ -25,6 +22,7 @@ BACKENDS = {
     'paramiko': 'testinfra.backend.paramiko.ParamikoBackend',
     'salt': 'testinfra.backend.salt.SaltBackend',
     'docker': 'testinfra.backend.docker.DockerBackend',
+    'podman': 'testinfra.backend.podman.PodmanBackend',
     'ansible': 'testinfra.backend.ansible.AnsibleBackend',
     'kubectl': 'testinfra.backend.kubectl.KubectlBackend',
     'winrm': 'testinfra.backend.winrm.WinRMBackend',
@@ -54,7 +52,7 @@ def parse_hostspec(hostspec):
                 kw[key] = True
         for key in ("sudo_user", 'namespace', 'container', 'read_timeout_sec',
                     'operation_timeout_sec', 'timeout', 'controlpersist',
-                    'kubeconfig'):
+                    'kubeconfig', 'context'):
             if key in query:
                 kw[key] = query.get(key)[0]
         for key in (

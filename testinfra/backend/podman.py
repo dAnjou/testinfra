@@ -13,18 +13,21 @@
 from testinfra.backend import base
 
 
-class LocalBackend(base.BaseBackend):
-    NAME = "local"
+class PodmanBackend(base.BaseBackend):
+    NAME = "podman"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__("local", **kwargs)
-
-    def get_pytest_id(self):
-        return "local"
-
-    @classmethod
-    def get_hosts(cls, host, **kwargs):
-        return [host]
+    def __init__(self, name, *args, **kwargs):
+        self.name, self.user = self.parse_containerspec(name)
+        super().__init__(self.name, *args, **kwargs)
 
     def run(self, command, *args, **kwargs):
-        return self.run_local(self.get_command(command, *args))
+        cmd = self.get_command(command, *args)
+        if self.user is not None:
+            out = self.run_local(
+                "podman exec -u %s %s /bin/sh -c %s",
+                self.user, self.name, cmd)
+        else:
+            out = self.run_local(
+                "podman exec %s /bin/sh -c %s", self.name, cmd)
+        out.command = self.encode(cmd)
+        return out

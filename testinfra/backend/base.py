@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,16 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 import collections
 import locale
 import logging
 import pipes
 import subprocess
-
-import testinfra.modules
-import testinfra.utils
+import urllib.parse
 
 logger = logging.getLogger("testinfra")
 
@@ -28,7 +23,7 @@ HostSpec = collections.namedtuple(
     'HostSpec', ['name', 'port', 'user', 'password'])
 
 
-class CommandResult(object):
+class CommandResult:
 
     def __init__(
         self, backend, exit_status, command, stdout_bytes,
@@ -41,7 +36,7 @@ class CommandResult(object):
         self._stderr = stderr
         self.command = command
         self._backend = backend
-        super(CommandResult, self).__init__()
+        super().__init__()
 
     @property
     def succeeded(self):
@@ -106,7 +101,7 @@ class CommandResult(object):
         )
 
 
-class BaseBackend(object):
+class BaseBackend:
     """Represent the connection to the remote or local system"""
     NAME = None
     HAS_RUN_SALT = False
@@ -118,7 +113,7 @@ class BaseBackend(object):
         self.hostname = hostname
         self.sudo = sudo
         self.sudo_user = sudo_user
-        super(BaseBackend, self).__init__()
+        super().__init__()
 
     def set_host(self, host):
         self._host = host
@@ -229,11 +224,11 @@ class BaseBackend(object):
         else:
             if ':' in name:
                 name, port = name.split(':', 1)
-        name = testinfra.utils.urlunquote(name)
+        name = urllib.parse.unquote(name)
         if user is not None:
-            user = testinfra.utils.urlunquote(user)
+            user = urllib.parse.unquote(user)
         if password is not None:
-            password = testinfra.utils.urlunquote(password)
+            password = urllib.parse.unquote(password)
         return HostSpec(name, port, user, password)
 
     @staticmethod

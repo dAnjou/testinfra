@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,10 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
-
-import six
 
 from testinfra.modules.base import InstanceModule
 
@@ -81,7 +76,7 @@ class Process(InstanceModule):
         match = []
         for attrs in self._get_processes(**filters):
             for key, value in filters.items():
-                if six.text_type(attrs[key]) != six.text_type(value):
+                if str(attrs[key]) != str(value):
                     break
             else:
                 attrs["_get_process_attribute_by_pid"] = (
@@ -149,7 +144,7 @@ class PosixProcess(Process):
 
     def _get_process_attribute_by_pid(self, pid, name):
         out = self.check_output(
-            "ps -ww -p %s -o lstart,%s", six.text_type(pid), name)
+            "ps -ww -p %s -o lstart,%s", str(pid), name)
         splitted = out.splitlines()[1].split()
         return {
             "lstart": " ".join(splitted[:5]),

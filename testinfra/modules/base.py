@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
 
-
-class Module(object):
+class Module:
     _host = None
 
     @classmethod
@@ -38,5 +35,5 @@ class InstanceModule(Module):
 
     @classmethod
     def get_module(cls, _host):
-        klass = super(InstanceModule, cls).get_module(_host)
+        klass = super().get_module(_host)
         return klass()

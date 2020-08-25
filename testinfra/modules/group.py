@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 from testinfra.modules.base import Module
 
 
@@ -21,10 +18,19 @@ class Group(Module):
 
     def __init__(self, name=None):
         self.name = name
-        super(Group, self).__init__()
+        super().__init__()
 
     @property
     def exists(self):
+        """Test if group exists
+
+        >>> host.group("wheel").exists
+        True
+        >>> host.group("nosuchgroup").exists
+        False
+
+        """
+
         return self.run_expect([0, 2], "getent group %s", self.name).rc == 0
 
     @property

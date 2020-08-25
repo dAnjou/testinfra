@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,9 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 import os
 
@@ -46,7 +42,7 @@ class ParamikoBackend(base.BaseBackend):
         self.ssh_identity_file = ssh_identity_file
         self.get_pty = False
         self.timeout = int(timeout)
-        super(ParamikoBackend, self).__init__(self.host.name, *args, **kwargs)
+        super().__init__(self.host.name, *args, **kwargs)
 
     def _load_ssh_config(self, client, cfg, ssh_config):
         for key, value in ssh_config.lookup(self.host.name).items():

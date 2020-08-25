@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,19 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 from testinfra.modules.base import Module
 
 
-class _AddrPort(object):
+class _AddrPort:
     def __init__(self, addr, port):
         self._addr = addr
         self._port = str(port)
 
     @property
     def is_reachable(self):
-        # pylint: disable=protected-access
         if not self._addr._host.exists('nc'):
             # Fallback to bash if netcat is not available
             return self._addr.run_expect(
@@ -55,7 +51,7 @@ class Addr(Module):
 
     def __init__(self, name):
         self._name = name
-        super(Addr, self).__init__()
+        super().__init__()
 
     @property
     def name(self):

@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import unicode_literals
-
 from testinfra.modules.base import Module
 
 
@@ -22,7 +19,7 @@ class MountPoint(Module):
     def __init__(self, path, _attrs_cache=None):
         self.path = path
         self._attrs_cache = _attrs_cache
-        super(MountPoint, self).__init__()
+        super().__init__()
 
     @classmethod
     def _iter_mountpoints(cls):
